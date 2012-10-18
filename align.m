@@ -24,29 +24,30 @@ function [T, matches] = align(des1, locs1, des2, locs2, dR, p, tol)
 
 % find the initial matches using the Lowe's method
 intiMatchIndices = loweMatch(des1, des2, dR);
-
+numMatch = size(intiMatchIndices,1);
 % use RANSAC algorithm to search for the matches
 P = 0.99; % the probability of success
 k = ceil(log(1-P)/log(1-p)); % the number of iteration needed
 matchIndices = zeros(1,2);
 % run k iterations
 for itri = 1:k
-    
+
     % calculate the estimated translation
-    coord1 = locs1(intiMatchIndices(itri,1),:);
-    coord2 = locs2(intiMatchIndices(itri,2),:);
+    idx = round(numMatch*rand(1));
+    coord1 = locs1(intiMatchIndices(idx,1),:);
+    coord2 = locs2(intiMatchIndices(idx,2),:);
     rowt = coord1(1) - coord2(1);
     colt = coord1(2) - coord2(2);
     
     % go through the rest of the matching pairs and find inliers
-    tmpMatchIndices = intiMatchIndices(itri,:);
-    for testi = 1:k
-        if testi ~= itri
+    tmpMatchIndices = intiMatchIndices(idx,:); % put the random picked 
+    incount = 1;
+    for testi = 1:numMatch
+        if testi ~= idx
             coord1_t = locs1(intiMatchIndices(testi,1),:);
             coord2_t = locs2(intiMatchIndices(testi,2),:);
             ssd = sqrt(((coord2_t(1)+rowt-coord1_t(1))^2 ...
-                    + (coord2_t(2)+colt-coord1_t(2))^2)/2);
-            incount = 1;
+                    + (coord2_t(2)+colt-coord1_t(2))^2)/2);           
             % if the test pair is an inlier
             if ssd < tol
                 incount = incount+1;

@@ -1,11 +1,11 @@
 % clear the existing variables
-clc, clear;
+clc, clear all;
 
 % ask the user for input path
 filepath = input('Please type in the input directory ending with /:', 's');
 
 % setup input/output
-fid = fopen([filepath,'runconfig.txt'],'r');
+fid = fopen([filepath,'runconfig.txt']);
 if fid < 0
     error('No input configuration in the directory');
 end
@@ -23,19 +23,23 @@ fclose(fid);
 outputfile = 'pano.JPG';
 format = 'jpg';
 
-% setup parameters
+% setup parameters for RANSAC
 dr = 0.6;
 p = 0.5;
 err = 5;
-
+sz = [480 640];
+%%
 % warp the images into cylindrical coordinate and store their SIFT
 % features with them
 wkset = struct('img',zeros(1,1),'des',zeros(1,1), 'locs', zeros(1,1), ...
                't2prev',zeros(1,1),'matches',zeros(1,1));
 for i = 1:size(filelist,1)
     img = imread([filepath,filelist{i,1}], format);
+    img = imresize(img,sz);
+%    img = undistort(img,f,k1,k2,[480 640]);
+    img = cylindrical(img,f);
     [des, locs] = sift(img);
-    wkset(i,1) = struct('img',cylindrical(img,f), ...
+    wkset(i,1) = struct('img',img, ...
                         'des', des, ...
                         'locs', locs, ...
                         't2prev',zeros(1,1), ...
@@ -51,7 +55,7 @@ for i = 2:size(wkset,1)
     [wkset(i).t2prev, wkset(i).matches] = ...
             align(des1, locs1, des2, locs2,dr,p,err);    
 end
-
+%%
 % stitch/blend the imgages
 T = zeros(1,2);
 img = wkset(1).img;
