@@ -1,17 +1,17 @@
-% img = crop(panoImg, r1, c1, r2, c2)
+% imgBuff = crop(panoImgBuff, r1, c1, r2, c2)
 % input:
-%   panoImg - the img to be cropped
+%   panoImgBuff - the img buffer to be cropped
 %   r1 - the row index of the upper cropping line
 %   c1 - the column index of the left cropping line
 %   r2 - the row index of the bottom cropping line
 %   c2 - the column index of the right cropping line
 % output:
-%   img - the cropped image object
+%   imgBuff - the cropped image buffer object
 %
 % function description:
 % This function takes an image object and cropped it with the given
 % cropping lines presented in the form of row/column indices.
 
-function img = crop(panoImg, r1, c1, r2, c2)
-    img = panoImg(r1:r2,c1:c2,:);
+function imgBuff = crop(panoImgBuff, r1, c1, r2, c2)
+    imgBuff = panoImgBuff(r1:r2,c1:c2,:);
 end

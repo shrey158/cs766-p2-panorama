@@ -76,7 +76,7 @@ for m = 1:size(matchIndices,1)
     matches(m,:,1) = coord1;
     matches(m,:,2) = coord2;
 end
-T = T/size(matchIndices,1);
+T = round(T/size(matchIndices,1));
 
 end
 
