@@ -20,37 +20,24 @@
 function [depths,flag] = interpolateDepths(imgBuff, r, c)
     % get the number of color channels
     nclrs = size(imgBuff,3) - 1;
-    
-    % create a 2x2x(nclrs+1) matrix to contain all four neighbor pixels
-    neighbors = zeros(2,2,nclrs+1);
-    rs = [floor(r), floor(r)+1];
-    cs = [floor(c), floor(c)+1];
     [nRows, nCols, ~] = size(imgBuff);
-    for i = 1:2
-        for j = 1:2
-            if inImage(rs(i), cs(j), nRows, nCols) == 1
-                neighbors(i,j,:) = imgBuff(rs(i), cs(j), :);
-            end
-        end
-    end
-    
+    if r >= 1 && r < nRows && c >= 1 && c < nCols
+    % create a 2x2x(nclrs+1) matrix to contain all four neighbor pixels
+        rs = [floor(r), floor(r)+1];
+        cs = [floor(c), floor(c)+1];    
+        neighbors = imgBuff(rs,cs,:);
     % create the interpolation distributions between rows/columns
-    rratios = [rs(2)-r, r-rs(1)];
-    cratios = [cs(2)-c, c-cs(1)];
+        rratios = [rs(2)-r, r-rs(1)];
+        cratios = [cs(2)-c, c-cs(1)];
     
     % generate the depth values by bi-linear interpolation
-    depths = zeros(1,nclrs);
-    for i = 1:nclrs
-        depths(1,i) = rratios*neighbors(:,:,i)*cratios';
-    end
-    flag = max(max(neighbors(:,:,end)));
-end
-
-function in = inImage(r, c, nRows, nCols)
-    if r >= 1 && r <= nRows && ...
-            c >= 1 && c <= nCols
-        in = 1;
+        depths = zeros(1,nclrs);
+        for i = 1:nclrs
+            depths(1,i) = rratios*double(neighbors(:,:,i))*cratios';
+        end
+        flag = 1;
     else
-        in = -1;
+        depths = zeros(1,nclrs);
+        flag = 0;    
     end
 end

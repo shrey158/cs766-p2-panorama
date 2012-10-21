@@ -10,40 +10,52 @@
 
 function outImgBuff = undistort(inImgBuff,f,k1,k2,rt_flag)
 
-% initialize the output image buffer
-[nRows,nCols,nChnls] = size(inImgBuff);
-outImgBuff = zeros(nRows,nCols,nChnls);
-
 % construct a rotation matrix. Identity matrix if no need to rotate
-rt = [1,0;0,1];
 if rt_flag == 1
-    rt = [0,1;-1,0];
+    sourceImg = imrotate(inImgBuff,-90);
+else
+    sourceImg = inImgBuff;
 end
 
-% construct the transformation matrices between [x,y] coordinates and [r,c]
-% indices. [r, c] are row and column numbers starting from 1. [x, y]
-% originates from the center point of the image. x increases along the
-% right direction and y increases along the up direction.
-rc2xy = [0,-1;1,0;-round(nCols/2),round(nRows/2)];
-xy2rc = [0,1;-1,0;round(nRows/2),round(nCols/2)];
+% initialize the output image buffer
+[nRows,nCols,nChnls] = size(sourceImg);
+outImgBuff = zeros(nRows,nCols,nChnls,'double');
 
 % inverse warping
 % Find/Generate the depth values for each pixel in the output image by
 % looking up the corresponding scene point in the input image.
 for r = 1:nRows
     for c = 1:nCols
-        xy = [r,c,1]*rc2xy*rt;
-        xy_n = xy/f;
-        r2 = xy_n*xy_n';
-        rd = (1+k1*r2+k2*r2^2); % radial distortion
-        xy_d = xy_n*rd;
-        xy_dist = xy_d*f*rt';
-        rc_d = [xy_dist,1]*xy2rc;
-        [depths, flag] = interpolateDepths(inImgBuff,rc_d(1),rc_d(2));
+        [rc_row, rc_col] = findUndistortPts(r,c,f,k1,k2,[nRows,nCols]);
+        [depths, flag] = interpolateDepths(sourceImg,rc_row,rc_col);
         outImgBuff(r,c,:) = [depths,flag];
     end
 end
 
 % reformat the image buffer
-outImgBuff = uint8(outImgBuff);
+if rt_flag == 1
+    outImgBuff = uint8(imrotate(outImgBuff,90));
+else
+    outImgBuff = uint8(outImgBuff);
+end
+end
+
+function [dr, dc] = findUndistortPts(r,c,f,k1,k2,imgSize)
+% find out corresponding coordinates according to inverse warping
+% sz = [nRows,nCols] is the size of the image.
+nRows = imgSize(1);
+nCols = imgSize(2);
+offsets_x = round(nCols/2);
+offsets_y = round(nRows/2);
+% convert origin to image center
+rn_col = (c-offsets_x)/f;
+rn_row = (nRows-r+1-offsets_y)/f;
+% apply radial distortion
+r2 = rn_col*rn_col + rn_row*rn_row;
+d = (1+k1*r2+k2*r2*r2);
+rd_col = rn_col*d;
+rd_row = rn_row*d;
+% convert origin to image left-top
+dc = f*rd_col + offsets_x;
+dr = nRows - (f*rd_row + offsets_y);
 end
